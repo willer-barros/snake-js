@@ -1,97 +1,103 @@
-window.onload = function () {
-    canvas = document.getElementById("canvas");
-    ctx = canvas.getContext("2d");
+document.addEventListener("DOMContentLoaded", function () {
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const grid = 20;
+    let snake = [{ x: 10, y: 10 }];
+    let food = { x: 15, y: 15 };
+    let dx = 1;
+    let dy = 0;
+    let tamanho = 1;
 
-    snake = [];
-    positionX = 10;
-    positionY = 10;
-    foodX = 15;
-    foodY = 15;
-    velX = 0;
-    velY = 0;
-    grid = 20;
-    tamanho = 3;
-
-    // Chama o jogo a cada 100 milisegundos
     setInterval(jogo, 100);
 
-    // Adiciona tabindex para garantir o foco no canvas
-    canvas.setAttribute('tabindex', 0);
-
-    canvas.addEventListener("keydown", function (e) {
+    document.addEventListener("keydown", function (e) {
         switch (e.key) {
             case "ArrowRight":
-                velX = 1;
-                velY = 0;
+                if (dx !== -1) {
+                    dx = 1;
+                    dy = 0;
+                }
                 break;
 
             case "ArrowLeft":
-                velX = -1;
-                velY = 0;
+                if (dx !== 1) {
+                    dx = -1;
+                    dy = 0;
+                }
                 break;
 
             case "ArrowUp":
-                velY = -1;
-                velX = 0;
+                if (dy !== 1) {
+                    dx = 0;
+                    dy = -1;
+                }
                 break;
 
             case "ArrowDown":
-                velY = 1;
-                velX = 0;
+                if (dy !== -1) {
+                    dx = 0;
+                    dy = 1;
+                }
                 break;
         }
     });
-};
 
-function jogo() {
-    ctx.fillStyle = "#2980B9";
+    function jogo() {
+        // Preenche o canvas com a cor de fundo
+        ctx.fillStyle = "#2980B9";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Movimenta a cobrinha
+        const cabeca = { x: snake[0].x + dx, y: snake[0].y + dy };
+        snake.unshift(cabeca);
 
-    //espelhamento
-    if (positionX < 0) {
-        positionX = grid
-    }
+        // Verifica se a cobrinha comeu a comida
+        if (cabeca.x === food.x && cabeca.y === food.y) {
+            tamanho++;
+            gerarComida();
+        } else {
+            snake.pop();
+        }
 
-    if (positionX > grid) {
-        positionX = 0
-    }
+        // Desenha a comida
+        ctx.fillStyle = "red";
+        ctx.fillRect(food.x * grid, food.y * grid, grid, grid);
 
-    if (positionY < 0) {
-        positionY = grid
-    }
+        // Desenha a cobrinha
+        ctx.fillStyle = "green";
+        snake.forEach(function (segmento) {
+            ctx.fillRect(segmento.x * grid, segmento.y * grid, grid, grid);
+        });
 
-    if (positionY > grid) {
-        positionY = 0
-    }
+        // Verifica colisão com a parede
+        if (
+            cabeca.x < 0 ||
+            cabeca.x >= canvas.width / grid ||
+            cabeca.y < 0 ||
+            cabeca.y >= canvas.height / grid
+        ) {
+            gameOver();
+        }
 
-    ctx.fillStyle = "#00f102";
-    for (let i = 0; i < snake.length; i++) {
-        ctx.fillRect(snake[i].x * grid, snake[i].y * grid, grid - 1, grid - 1);
-        if (snake[i].x == positionX && snake[i].y == positionY) {
-            tamanho = 3
+        // Verifica colisão da cabeça com o corpo
+        for (let i = 1; i < snake.length; i++) {
+            if (cabeca.x === snake[i].x && cabeca.y === snake[i].y) {
+                gameOver();
+            }
         }
     }
-    
-    snake.push({ x: positionX, y: positionY });
 
-
-    // Atualiza a posição da cabeça da cobrinha com base na velocidade
-    positionX += velX;
-    positionY += velY;
-
-    while (snake.length > tamanho) {
-        snake.shift();
+    function gerarComida() {
+        food.x = Math.floor(Math.random() * (canvas.width / grid));
+        food.y = Math.floor(Math.random() * (canvas.height / grid));
     }
 
-    ctx.fillStyle = "#FF0000";
-    ctx.fillRect(foodX * grid, foodY * grid, grid - 1, grid - 1)
-
-    if (positionX == foodX && positionY == foodY) {
-        tamanho++
-        foodX = Math.floor(Math.random() * grid)
-        foodY = Math.floor(Math.random() * grid)
-
+    function gameOver() {
+        alert("Game Over!");
+        snake = [{ x: 10, y: 10 }];
+        tamanho = 1;
+        dx = 1;
+        dy = 0;
+        gerarComida();
     }
-
-}
+});
